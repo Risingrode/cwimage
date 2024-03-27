@@ -26,12 +26,13 @@ import va from '@vercel/analytics';
 import { PromptSuggestion } from '@/components/PromptSuggestion';
 import { useRouter } from 'next/navigation';
 import { toast, Toaster } from 'react-hot-toast';
+import { createProdia } from 'prodia';
 
 const promptSuggestions = [
-  'A city view with clouds',
-  'A beautiful glacier',
-  'A forest overlooking a mountain',
-  'A saharan desert',
+  '绘制一个美女',
+  '绘制一个动漫人物',
+  '绘制一个帅哥',
+  '绘制一个苹果',
 ];
 
 const generateFormSchema = z.object({
@@ -93,6 +94,7 @@ const Body = ({
     [form],
   );
 
+  // TODO 表单提交时被调用
   const handleSubmit = useCallback(
     async (values: GenerateFormValues) => {
       setIsLoading(true);
@@ -100,30 +102,31 @@ const Body = ({
       setSubmittedURL(values.url);
 
       try {
-        const request: QrGenerateRequest = {
-          url: values.url,
-          prompt: values.prompt,
-        };
-        const response = await fetch('/api/generate', {
-          method: 'POST',
-          body: JSON.stringify(request),
-        });
+        // const request: QrGenerateRequest = {
+        //   url: values.url,
+        //   prompt: values.prompt,
+        // };
+        // const response = await fetch('/api/generate', {
+        //   method: 'POST',
+        //   body: JSON.stringify(request),
+        // });
 
-        // Handle API errors.
-        if (!response.ok || response.status !== 200) {
-          const text = await response.text();
-          throw new Error(
-            `Failed to generate QR code: ${response.status}, ${text}`,
-          );
-        }
+        // // Handle API errors.
+        // if (!response.ok || response.status !== 200) {
+        //   const text = await response.text();
+        //   throw new Error(
+        //     `Failed to generate QR code: ${response.status}, ${text}`,
+        //   );
+        // }
 
-        const data = await response.json();
+        // const data = await response.json();
 
-        va.track('Generated QR Code', {
-          prompt: values.prompt,
-        });
+        // va.track('Generated QR Code', {
+        //   prompt: values.prompt,
+        // });
 
-        router.push(`/start/${data.id}`);
+        // router.push(`/start/${data.id}`);
+        prodiaImage();
       } catch (error) {
         va.track('Failed to generate', {
           prompt: values.prompt,
@@ -137,16 +140,27 @@ const Body = ({
     },
     [router],
   );
+  const prodia = createProdia({
+    apiKey: '48847940-aded-4214-9400-333c518105f0',
+  });
+  const prodiaImage = async () => {
+    const job = await prodia.generate({
+      prompt: 'puppies in a cloud, 4k',
+    });
+
+    const { imageUrl, status } = await prodia.wait(job);
+    console.log(imageUrl, status);
+  };
 
   return (
     <div className="flex justify-center items-center flex-col w-full lg:p-0 p-4 sm:mb-28 mb-0">
       <div className="max-w-6xl w-full grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-12 mt-10">
         <div className="col-span-1">
-          <h1 className="text-3xl font-bold mb-10">Generate a QR Code</h1>
+          <h1 className="text-3xl font-bold mb-10">生成图片</h1>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(handleSubmit)}>
               <div className="flex flex-col gap-4">
-                <FormField
+                {/* <FormField
                   control={form.control}
                   name="url"
                   render={({ field }) => (
@@ -161,30 +175,25 @@ const Body = ({
                       <FormMessage />
                     </FormItem>
                   )}
-                />
+                /> */}
                 <FormField
                   control={form.control}
                   name="prompt"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Prompt</FormLabel>
+                      <FormLabel>提示词</FormLabel>
                       <FormControl>
-                        <Textarea
-                          placeholder="A city view with clouds"
-                          className="resize-none"
-                          {...field}
-                        />
+                        <Textarea className="resize-none" {...field} />
                       </FormControl>
                       <FormDescription className="">
-                        This is what the image in your QR code will look like.
+                        这里输入你的图片提示词
                       </FormDescription>
-
                       <FormMessage />
                     </FormItem>
                   )}
                 />
                 <div className="my-2">
-                  <p className="text-sm font-medium mb-3">Prompt suggestions</p>
+                  <p className="text-sm font-medium mb-3">例子：</p>
                   <div className="grid sm:grid-cols-2 grid-cols-1 gap-3 text-center text-gray-500 text-sm">
                     {promptSuggestions.map((suggestion) => (
                       <PromptSuggestion
@@ -201,13 +210,17 @@ const Body = ({
                   disabled={isLoading}
                   className="inline-flex justify-center
                  max-w-[200px] mx-auto w-full"
+                  onClick={() => {
+                    // 函数在这里被调用
+                    prodiaImage();
+                  }}
                 >
                   {isLoading ? (
                     <LoadingDots color="white" />
                   ) : response ? (
-                    '✨ Regenerate'
+                    '✨ 正在生成'
                   ) : (
-                    'Generate'
+                    '生成'
                   )}
                 </Button>
 
@@ -252,7 +265,7 @@ const Body = ({
                       variant="outline"
                       onClick={() => {
                         navigator.clipboard.writeText(
-                          `https://qrgpt.io/start/${id || ''}`,
+                          `https://代码有点萌.io/start/${id || ''}`,
                         );
                         toast.success('Link copied to clipboard');
                       }}

@@ -12,7 +12,7 @@ export class ReplicateClient {
   }
 
   /**
-   * Generate a QR code.
+   * 生成图片.
    */
   generateQrCode = async (
     request: QrCodeControlNetRequest,
