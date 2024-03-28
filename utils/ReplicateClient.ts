@@ -1,4 +1,4 @@
-import { getEnv, ENV_KEY } from '@/utils/env';
+import { getEnv } from '@/utils/env';
 import Replicate from 'replicate';
 import { QrCodeControlNetRequest, QrCodeControlNetResponse } from './types';
 
@@ -39,7 +39,7 @@ export class ReplicateClient {
   };
 }
 
-const apiKey = getEnv(ENV_KEY.REPLICATE_API_KEY);
+const apiKey = getEnv('123');
 if (!apiKey) {
   throw new Error('REPLICATE_API_KEY is not set');
 }
