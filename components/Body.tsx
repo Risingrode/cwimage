@@ -102,31 +102,30 @@ const Body = ({
       setSubmittedURL(values.url);
 
       try {
-        // const request: QrGenerateRequest = {
-        //   url: values.url,
-        //   prompt: values.prompt,
-        // };
-        // const response = await fetch('/api/generate', {
-        //   method: 'POST',
-        //   body: JSON.stringify(request),
-        // });
+        const request: QrGenerateRequest = {
+          url: values.url,
+          prompt: values.prompt,
+        };
+        const response = await fetch('/api/generate', {
+          method: 'POST',
+          body: JSON.stringify(request),
+        });
 
-        // // Handle API errors.
-        // if (!response.ok || response.status !== 200) {
-        //   const text = await response.text();
-        //   throw new Error(
-        //     `Failed to generate QR code: ${response.status}, ${text}`,
-        //   );
-        // }
+        // Handle API errors.
+        if (!response.ok || response.status !== 200) {
+          const text = await response.text();
+          throw new Error(
+            `Failed to generate QR code: ${response.status}, ${text}`,
+          );
+        }
 
-        // const data = await response.json();
+        const data = await response.json();
 
-        // va.track('Generated QR Code', {
-        //   prompt: values.prompt,
-        // });
+        va.track('Generated QR Code', {
+          prompt: values.prompt,
+        });
 
-        // router.push(`/start/${data.id}`);
-        prodiaImage();
+        router.push(`/start/${data.id}`);
       } catch (error) {
         va.track('Failed to generate', {
           prompt: values.prompt,
@@ -144,6 +143,7 @@ const Body = ({
     apiKey: '48847940-aded-4214-9400-333c518105f0',
   });
   const prodiaImage = async () => {
+    console.log('prodiaImage');
     const job = await prodia.generate({
       prompt: 'puppies in a cloud, 4k',
     });
