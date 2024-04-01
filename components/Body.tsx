@@ -58,6 +58,7 @@ const Body = ({
   const [error, setError] = useState<Error | null>(null);
   const [response, setResponse] = useState<QrGenerateResponse | null>(null);
   const [submittedURL, setSubmittedURL] = useState<string | null>(null);
+  const [isImage, setIsImage] = useState('');
 
   const router = useRouter();
 
@@ -93,51 +94,6 @@ const Body = ({
     [form],
   );
 
-  // TODO 表单提交时被调用
-  const handleSubmit = useCallback(
-    async (values: GenerateFormValues) => {
-      setIsLoading(true);
-      setResponse(null);
-      setSubmittedURL(values.url);
-
-      try {
-        const request: QrGenerateRequest = {
-          url: values.url,
-          prompt: values.prompt,
-        };
-        const response = await fetch('/api/generate', {
-          method: 'POST',
-          body: JSON.stringify(request),
-        });
-
-        // Handle API errors.
-        if (!response.ok || response.status !== 200) {
-          const text = await response.text();
-          throw new Error(
-            `Failed to generate QR code: ${response.status}, ${text}`,
-          );
-        }
-
-        const data = await response.json();
-
-        va.track('Generated QR Code', {
-          prompt: values.prompt,
-        });
-
-        router.push(`/start/${data.id}`);
-      } catch (error) {
-        va.track('Failed to generate', {
-          prompt: values.prompt,
-        });
-        if (error instanceof Error) {
-          setError(error);
-        }
-      } finally {
-        setIsLoading(false);
-      }
-    },
-    [router],
-  );
   const prodia = createProdia({
     apiKey: '48847940-aded-4214-9400-333c518105f0',
   });
@@ -151,30 +107,31 @@ const Body = ({
     console.log(imageUrl, status);
   };
 
+  const imageGenerate = async (prompt1: string) => {
+    setIsLoading(true);
+    setSubmittedURL('true');
+    const response = await fetch(
+      `https://api-collect.idcdun.com/v1/images/generations?prompt=${prompt1}&n=1`,
+      {
+        method: 'GET',
+      },
+    );
+
+    const data = await response.json();
+    // 休息一下
+    // await new Promise((resolve) => setTimeout(resolve, 8000));
+    setIsImage(data.data[0].url);
+    setIsLoading(false);
+  };
+
   return (
     <div className="flex justify-center items-center flex-col w-full lg:p-0 p-4 sm:mb-28 mb-0">
       <div className="max-w-6xl w-full grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-12 mt-10">
         <div className="col-span-1">
           <h1 className="text-3xl font-bold mb-10">生成图片</h1>
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(handleSubmit)}>
+            <form>
               <div className="flex flex-col gap-4">
-                {/* <FormField
-                  control={form.control}
-                  name="url"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>URL</FormLabel>
-                      <FormControl>
-                        <Input placeholder="roomgpt.io" {...field} />
-                      </FormControl>
-                      <FormDescription>
-                        This is what your QR code will link to.
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                /> */}
                 <FormField
                   control={form.control}
                   name="prompt"
@@ -191,7 +148,7 @@ const Body = ({
                     </FormItem>
                   )}
                 />
-                <div className="my-2">
+                {/* <div className="my-2">
                   <p className="text-sm font-medium mb-3">例子：</p>
                   <div className="grid sm:grid-cols-2 grid-cols-1 gap-3 text-center text-gray-500 text-sm">
                     {promptSuggestions.map((suggestion) => (
@@ -203,7 +160,7 @@ const Body = ({
                       />
                     ))}
                   </div>
-                </div>
+                </div> */}
                 <Button
                   type="submit"
                   disabled={isLoading}
@@ -211,7 +168,8 @@ const Body = ({
                  max-w-[200px] mx-auto w-full"
                   onClick={() => {
                     // 函数在这里被调用
-                    prodiaImage();
+                    // prodiaImage();
+                    imageGenerate(form.getValues().prompt);
                   }}
                 >
                   {isLoading ? (
@@ -238,14 +196,16 @@ const Body = ({
           {submittedURL && (
             <>
               <h1 className="text-3xl font-bold sm:mb-5 mb-5 mt-5 sm:mt-0 sm:text-center text-left">
-                Your QR Code
+                你的图片
               </h1>
               <div>
                 <div className="flex flex-col justify-center relative h-auto items-center">
-                  {response ? (
-                    <QrCard
-                      imageURL={response.image_url}
-                      time={(response.model_latency_ms / 1000).toFixed(2)}
+                  {isImage ? (
+                    <img
+                      src={isImage}
+                      style={{
+                        borderRadius: '5%',
+                      }}
                     />
                   ) : (
                     <div className="relative flex flex-col justify-center items-center gap-y-2 w-[510px] border border-gray-300 rounded shadow group p-2 mx-auto animate-pulse bg-gray-400 aspect-square max-w-full" />
@@ -253,11 +213,7 @@ const Body = ({
                 </div>
                 {response && (
                   <div className="flex justify-center gap-5 mt-4">
-                    <Button
-                      onClick={() =>
-                        downloadQrCode(response.image_url, 'qrCode')
-                      }
-                    >
+                    <Button onClick={() => downloadQrCode(isImage, 'qrCode')}>
                       Download
                     </Button>
                     <Button

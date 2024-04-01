@@ -2,10 +2,9 @@ import Image from 'next/image';
 
 type QrCardProps = {
   imageURL?: string;
-  time: string;
 };
 
-export const QrCard: React.FC<QrCardProps> = ({ imageURL, time }) => {
+export const QrCard: React.FC<QrCardProps> = ({ imageURL }) => {
   if (!imageURL) {
     return (
       <div>
@@ -24,7 +23,7 @@ export const QrCard: React.FC<QrCardProps> = ({ imageURL, time }) => {
         height={480}
       />
       <p className="text-gray-400 text-sm italic">
-        QR code took {time} seconds to generate.
+        QR code took seconds to generate.
       </p>
     </div>
   );
